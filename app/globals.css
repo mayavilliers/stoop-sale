@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   StoopSale design tokens
+   "Garage-sale signage, made trustworthy."
+   The boldest color (--live) is reserved for the "Open now"
+   state only, so the loudest thing on screen always means the
+   single most important fact.
+   ============================================================ */
+:root {
+  --ink: #1a1714;          /* sharpie on cardboard */
+  --paper: #efe6d4;        /* kraft / manila page */
+  --surface: #ffffff;      /* clean white cards = the trustworthy counterweight */
+  --muted: #7a7064;        /* secondary text */
+  --line: #e2d7c2;         /* hairline dividers on paper */
+
+  --sticker: #e8430f;      /* price-sticker red — primary actions */
+  --sticker-ink: #ffffff;
+
+  --kraft: #c9a86a;        /* masking-tape tan — secondary chips */
+
+  --live: #b6e80b;         /* fluorescent poster green — OPEN NOW only */
+  --live-ink: #1a1714;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body), system-ui, sans-serif;
+    /* faint paper grain so the kraft background reads as material, not flat fill */
+    background-image: radial-gradient(rgba(26, 23, 20, 0.025) 1px, transparent 1px);
+    background-size: 4px 4px;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  /* numeric/data feel — prices, times, distances */
+  .tabular {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-feature-settings: "tnum" 1;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+/* ---- Map markers (price-tag pills) ------------------------------ */
+.ss-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 4px 7px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(26, 23, 20, 0.35);
+  border: 1.5px solid var(--paper);
+  transform: translateY(-2px);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.ss-marker:hover {
+  transform: translateY(-4px) scale(1.04);
+}
+.ss-marker__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  flex: none;
+}
+.ss-marker--live {
+  background: var(--live);
+  color: var(--live-ink);
+  border-color: var(--ink);
+}
+.ss-marker--selected {
+  outline: 3px solid var(--sticker);
+  outline-offset: 1px;
+}
