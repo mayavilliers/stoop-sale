@@ -67,7 +67,7 @@ export default async function SavedPage() {
           </Link>
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {cards.map((listing) => (
             <div key={listing.id} className="relative">
               <RemoveSavedButton listingId={listing.id} />

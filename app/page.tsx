@@ -102,7 +102,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       ) : cards.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {cards.map((listing) => (
             <SaleCard key={listing.id} listing={listing} />
           ))}

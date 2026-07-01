@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Tag, MapPin } from "lucide-react";
+import { Tag, MapPin, Clock } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { getDisplayState, formatSaleWindow } from "@/lib/listing-status";
 import { saleTypeLabel, categoryLabel } from "@/lib/constants";
@@ -28,48 +28,37 @@ export function SaleCard({ listing }: { listing: BrowseCardData }) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group block overflow-hidden rounded-card border border-line bg-surface shadow-card transition hover:shadow-pop focus-visible:shadow-pop"
+      className="group flex gap-3 rounded-card border border-line bg-surface p-3 shadow-card transition hover:shadow-pop focus-visible:shadow-pop"
     >
-      <div className="relative aspect-[3/2] w-full overflow-hidden bg-paper">
-        {listing.photoUrl ? (
-          <Image
-            src={listing.photoUrl}
-            alt=""
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-kraft">
-            <Tag className="h-10 w-10 -rotate-6" aria-hidden />
-          </div>
-        )}
-        <div className="absolute left-2.5 top-2.5">
-          <StatusBadge state={state} className="shadow-sm" />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center gap-2">
+          <StatusBadge state={state} />
+          {typeof listing.distanceMiles === "number" ? (
+            <span className="tabular text-xs font-semibold text-muted">
+              {formatMiles(listing.distanceMiles)}
+            </span>
+          ) : null}
         </div>
-        {typeof listing.distanceMiles === "number" ? (
-          <div className="tabular absolute right-2.5 top-2.5 rounded-full bg-ink/85 px-2 py-0.5 text-xs font-semibold text-paper">
-            {formatMiles(listing.distanceMiles)}
-          </div>
-        ) : null}
-      </div>
 
-      <div className="p-3.5">
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
-          {saleTypeLabel(listing.sale_type)}
-        </div>
-        <h3 className="mt-1 line-clamp-2 font-display text-[17px] font-bold leading-snug">
-          {listing.title}
-        </h3>
-        <p className="tabular mt-1 text-sm text-muted">
+        {/* Date & time — the most prominent line on the card. */}
+        <p className="tabular mt-2 flex items-start gap-1.5 text-[15px] font-semibold leading-snug text-ink">
+          <Clock className="mt-0.5 h-4 w-4 shrink-0 text-sticker" aria-hidden />
           {formatSaleWindow(listing.starts_at, listing.ends_at)}
         </p>
-        <p className="mt-0.5 flex items-center gap-1 text-sm text-muted">
-          <MapPin className="h-3.5 w-3.5" aria-hidden />
-          {place}
+
+        <h3 className="mt-1.5 line-clamp-2 font-display text-base font-bold leading-snug">
+          {listing.title}
+        </h3>
+
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="truncate">
+            {saleTypeLabel(listing.sale_type)} · {place}
+          </span>
         </p>
+
         {listing.categories.length ? (
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {listing.categories.slice(0, 3).map((c) => (
               <span
                 key={c}
@@ -85,6 +74,23 @@ export function SaleCard({ listing }: { listing: BrowseCardData }) {
             ) : null}
           </div>
         ) : null}
+      </div>
+
+      {/* Secondary thumbnail — small, and unobtrusive when there's no photo. */}
+      <div className="relative h-24 w-24 shrink-0 self-center overflow-hidden rounded-xl bg-paper sm:h-28 sm:w-28">
+        {listing.photoUrl ? (
+          <Image
+            src={listing.photoUrl}
+            alt=""
+            fill
+            sizes="112px"
+            className="object-cover transition duration-300 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-kraft/70">
+            <Tag className="h-7 w-7 -rotate-6" aria-hidden />
+          </div>
+        )}
       </div>
     </Link>
   );

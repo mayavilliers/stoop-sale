@@ -248,7 +248,6 @@ A user becomes an admin by setting `profiles.role = 'ADMIN'` (the seed does this
 
 ## Roadmap (post-MVP ideas)
 
-- Places Autocomplete on the address field (key + API are already provisioned).
 - Drag-to-reorder photos; clean up orphaned Storage objects on photo removal.
 - PostGIS for true radius queries and server-side distance sorting at scale.
 - Per-sale authoritative timezones for cross-region listings.

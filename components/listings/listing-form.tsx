@@ -8,6 +8,7 @@ import type { ListingFormState } from "@/app/listings/actions";
 import { Field, Input } from "@/components/ui/input";
 import { Textarea, Select, Checkbox } from "@/components/ui/textarea";
 import { PhotoUploader } from "@/components/listings/photo-uploader";
+import { AddressAutocomplete } from "@/components/listings/address-autocomplete";
 
 export type ListingInitial = {
   title?: string;
@@ -142,16 +143,15 @@ export function ListingForm({
       </div>
 
       <Field label="Address" htmlFor="address" error={err.address}>
-        <Input
+        <AddressAutocomplete
           id="address"
           name="address"
           defaultValue={initial.address}
-          placeholder="123 Green St, Brooklyn, NY 11222"
-          autoComplete="off"
+          placeholder="Start typing your address…"
           required
         />
         <p className="mt-1 text-xs text-muted">
-          We&apos;ll place this on the map. Address autocomplete arrives in a later update.
+          Start typing and pick your address from the list so it lands in the right spot on the map.
         </p>
       </Field>
 

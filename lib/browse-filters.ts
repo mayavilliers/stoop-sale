@@ -7,8 +7,6 @@ export type SortKey = "distance" | "starting" | "ending" | "newest";
 export const WHEN_OPTIONS: { value: WhenFilter; label: string }[] = [
   { value: "open", label: "Open now" },
   { value: "today", label: "Today" },
-  { value: "tomorrow", label: "Tomorrow" },
-  { value: "weekend", label: "This weekend" },
   { value: "all", label: "All upcoming" },
 ];
 

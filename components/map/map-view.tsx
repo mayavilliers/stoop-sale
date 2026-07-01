@@ -39,6 +39,7 @@ export function MapView() {
   const advancedClassRef = useRef<typeof google.maps.marker.AdvancedMarkerElement | null>(null);
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   const fetchSeq = useRef(0);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialized = useRef(false);
@@ -47,8 +48,12 @@ export function MapView() {
   const filterKey = ["when", "category", "type", "tz"]
     .map((k) => `${k}=${params.get(k) ?? ""}`)
     .join("&");
-  const lat = Number(params.get("lat"));
-  const lng = Number(params.get("lng"));
+  // NOTE: params.get returns null when absent, and Number(null) === 0, which
+  // would (wrongly) place the map at 0°,0° off the coast of Africa. Guard for it.
+  const latRaw = params.get("lat");
+  const lngRaw = params.get("lng");
+  const lat = latRaw !== null ? Number(latRaw) : NaN;
+  const lng = lngRaw !== null ? Number(lngRaw) : NaN;
   const hasLoc = Number.isFinite(lat) && Number.isFinite(lng);
 
   const fetchInBounds = useCallback(async () => {
@@ -137,13 +142,6 @@ export function MapView() {
         });
         mapRef.current = map;
 
-        if (hasLoc) {
-          const dot = document.createElement("div");
-          dot.style.cssText =
-            "width:14px;height:14px;border-radius:999px;background:#2b6fff;border:2px solid #fff;box-shadow:0 0 0 3px rgba(43,111,255,0.3)";
-          new AdvancedMarkerElement({ position: { lat, lng }, content: dot, map });
-        }
-
         map.addListener("idle", () => {
           if (idleTimer.current) clearTimeout(idleTimer.current);
           idleTimer.current = setTimeout(fetchInBounds, 300);
@@ -162,6 +160,25 @@ export function MapView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Recenter on the user's location whenever it changes (e.g. tapping
+  // "Use my location"), and keep the "you are here" dot in sync. Without this
+  // the map stayed wherever it was when a new location came in.
+  useEffect(() => {
+    const map = mapRef.current;
+    const AdvancedMarker = advancedClassRef.current;
+    if (phase !== "ready" || !map || !AdvancedMarker || !hasLoc) return;
+
+    map.panTo({ lat, lng });
+    if ((map.getZoom() ?? 0) < 13) map.setZoom(14);
+
+    if (userMarkerRef.current) userMarkerRef.current.map = null;
+    const dot = document.createElement("div");
+    dot.style.cssText =
+      "width:14px;height:14px;border-radius:999px;background:#2b6fff;border:2px solid #fff;box-shadow:0 0 0 3px rgba(43,111,255,0.3)";
+    userMarkerRef.current = new AdvancedMarker({ position: { lat, lng }, content: dot, map });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lat, lng, hasLoc, phase]);
 
   // Refetch when filters change (map already mounted).
   useEffect(() => {

@@ -54,7 +54,7 @@ export function FilterBar() {
         setLocating(false);
         setDenied(true);
       },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
 

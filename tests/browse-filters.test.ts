@@ -14,7 +14,7 @@ describe("parseBrowseParams", () => {
 
   it("accepts valid values and rejects invalid ones", () => {
     const p = parseBrowseParams({
-      when: "weekend",
+      when: "today",
       sort: "distance",
       category: "RECORDS",
       type: "STOOP",
@@ -22,7 +22,7 @@ describe("parseBrowseParams", () => {
       lng: "-73.95",
       tz: "-240",
     });
-    expect(p.when).toBe("weekend");
+    expect(p.when).toBe("today");
     expect(p.sort).toBe("distance");
     expect(p.category).toBe("RECORDS");
     expect(p.saleType).toBe("STOOP");
