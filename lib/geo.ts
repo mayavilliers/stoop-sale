@@ -23,3 +23,15 @@ export function formatMiles(miles: number): string {
 export function directionsToCoords(lat: number, lng: number): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
+
+/**
+ * Coarsen coordinates (~0.7 mi grid) for listings whose sellers hide the exact
+ * address until the sale starts, so public maps/lists can't reveal the home.
+ */
+export function coarsen(lat: number, lng: number): LatLng {
+  const grid = 0.01;
+  return {
+    lat: Math.round(lat / grid) * grid,
+    lng: Math.round(lng / grid) * grid,
+  };
+}

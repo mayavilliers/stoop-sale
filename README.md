@@ -66,6 +66,12 @@ supabase start          # boots Postgres, Auth, Storage locally (Docker)
 supabase db reset       # applies ALL migrations in supabase/migrations/ (0001 + 0002)
 ```
 
+> **Growth kit (0003):** email alerts, address privacy, and postponement need
+> `supabase/migrations/0003_growth.sql` applied the same way. Optional: set
+> `RESEND_API_KEY` + `ALERTS_FROM_EMAIL` to actually send the daily alert digest
+> (without a key the cron runs as a safe dry run). Vercel crons: expire 8:00 UTC,
+> alerts 13:00 UTC.
+>
 > **Already running a live project on 0001?** Apply the new migration by pasting
 > `supabase/migrations/0002_sessions_community.sql` into the Supabase SQL editor and
 > running it (or `supabase db push`). It adds multi-day sale sessions, weekly

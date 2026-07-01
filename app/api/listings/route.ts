@@ -4,6 +4,7 @@ import { timeWindow, type WhenFilter } from "@/lib/browse-filters";
 import { CATEGORY_VALUES, SALE_TYPE_VALUES } from "@/lib/constants";
 import type { Category, SaleType } from "@/lib/types/database.types";
 import type { MapMarker } from "@/lib/map-markers";
+import { coarsen } from "@/lib/geo";
 
 const WHENS: WhenFilter[] = ["open", "today", "tomorrow", "weekend", "all"];
 const MAX = 500;
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("sale_listings")
     .select(
-      "id,title,latitude,longitude,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,neighborhood,categories,sale_photos(url,sort_order)"
+      "id,title,latitude,longitude,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,hide_address_until_start,neighborhood,categories,sale_photos(url,sort_order)"
     )
     .eq("status", "ACTIVE")
     .eq("is_hidden", false)
@@ -70,11 +71,16 @@ export async function GET(request: Request) {
 
   const markers: MapMarker[] = (data ?? []).map((l) => {
     const photos = (l.sale_photos ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
+    const hidden =
+      l.hide_address_until_start && new Date(l.starts_at).getTime() > Date.now();
+    const coords = hidden
+      ? coarsen(l.latitude, l.longitude)
+      : { lat: l.latitude, lng: l.longitude };
     return {
       id: l.id,
       title: l.title,
-      lat: l.latitude,
-      lng: l.longitude,
+      lat: coords.lat,
+      lng: coords.lng,
       sale_type: l.sale_type,
       status: l.status,
       starts_at: l.starts_at,

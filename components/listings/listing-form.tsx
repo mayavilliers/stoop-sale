@@ -24,6 +24,7 @@ export type ListingInitial = {
   photos?: string[];
   sessions?: SessionInitial[];
   recurringWeekly?: boolean;
+  hideAddressUntilStart?: boolean;
 };
 
 function Buttons({ mode }: { mode: "create" | "edit" }) {
@@ -165,6 +166,11 @@ export function ListingForm({
           name="earlyBirdsOk"
           label="Early birds okay"
           defaultChecked={initial.earlyBirdsOk ?? true}
+        />
+        <Checkbox
+          name="hideAddressUntilStart"
+          label="Hide my exact address until the sale starts (shows neighborhood only)"
+          defaultChecked={initial.hideAddressUntilStart}
         />
       </fieldset>
 

@@ -62,6 +62,8 @@ export interface Database {
           recurring_weekly: boolean;
           is_community: boolean;
           times_unknown: boolean;
+          hide_address_until_start: boolean;
+          postponed_note: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -93,6 +95,8 @@ export interface Database {
           recurring_weekly?: boolean;
           is_community?: boolean;
           times_unknown?: boolean;
+          hide_address_until_start?: boolean;
+          postponed_note?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["sale_listings"]["Insert"]>;
         Relationships: [
@@ -133,6 +137,28 @@ export interface Database {
             referencedColumns: ["id"];
           }
         ];
+      };
+      sale_alerts: {
+        Row: {
+          id: string;
+          email: string;
+          latitude: number;
+          longitude: number;
+          radius_mi: number;
+          label: string | null;
+          token: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          latitude: number;
+          longitude: number;
+          radius_mi?: number;
+          label?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["sale_alerts"]["Insert"]>;
+        Relationships: [];
       };
       sale_sessions: {
         Row: {

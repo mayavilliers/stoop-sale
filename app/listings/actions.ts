@@ -70,6 +70,7 @@ export async function createListing(
       venmo_accepted: v.venmoAccepted,
       early_birds_ok: v.earlyBirdsOk,
       recurring_weekly: v.recurringWeekly,
+      hide_address_until_start: v.hideAddressUntilStart,
       status: publish ? "ACTIVE" : "DRAFT",
     })
     .select("id")
@@ -172,6 +173,7 @@ export async function updateListing(
       venmo_accepted: v.venmoAccepted,
       early_birds_ok: v.earlyBirdsOk,
       recurring_weekly: v.recurringWeekly,
+      hide_address_until_start: v.hideAddressUntilStart,
     })
     .eq("id", id);
 
@@ -321,4 +323,20 @@ export async function spotListing(
 
   revalidatePath("/");
   redirect(`/listings/${created.id}`);
+}
+
+/** Owner marks a sale postponed (or clears it). Shows a banner everywhere. */
+export async function setPostponed(id: string, note: string | null): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  await supabase
+    .from("sale_listings")
+    .update({ postponed_note: note ? note.slice(0, 140) : null })
+    .eq("id", id); // RLS: owner-only
+  revalidatePath("/my-listings");
+  revalidatePath("/");
+  revalidatePath(`/listings/${id}`);
 }

@@ -21,6 +21,7 @@ export type BrowseCardData = {
   recurring_weekly?: boolean;
   is_community?: boolean;
   times_unknown?: boolean;
+  postponed_note?: string | null;
   photoUrl: string | null;
   distanceMiles?: number | null;
 };
@@ -50,6 +51,11 @@ export function SaleCard({
           {/* Top row: status + distance (heart is overlaid top-right) */}
           <div className="flex items-center gap-2 pr-10">
             <StatusBadge state={state} />
+            {listing.postponed_note ? (
+              <span className="rounded-full bg-terra px-2 py-0.5 text-[11px] font-semibold text-terra-ink">
+                Postponed
+              </span>
+            ) : null}
             {typeof listing.distanceMiles === "number" ? (
               <span className="tabular text-xs font-semibold text-muted">
                 {formatMiles(listing.distanceMiles)}

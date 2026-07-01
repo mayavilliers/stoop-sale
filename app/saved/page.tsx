@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SaleCard, type BrowseCardData } from "@/components/listings/sale-card";
+import { RouteButton } from "@/components/listings/route-button";
 
 export const metadata = { title: "Saved sales — StoopSale" };
 
@@ -14,10 +15,15 @@ export default async function SavedPage() {
   const { data: rows } = await supabase
     .from("saved_sales")
     .select(
-      "created_at, listing:sale_listings(id,title,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,neighborhood,city,categories,sale_photos(url,sort_order))"
+      "created_at, listing:sale_listings(id,title,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,postponed_note,neighborhood,city,latitude,longitude,categories,sale_photos(url,sort_order))"
     )
     .eq("user_id", user!.id)
     .order("created_at", { ascending: false });
+
+  const stops = (rows ?? [])
+    .map((r) => r.listing)
+    .filter((l): l is NonNullable<typeof l> => !!l && l.status !== "DELETED")
+    .map((l) => ({ lat: l.latitude, lng: l.longitude }));
 
   const cards: BrowseCardData[] = (rows ?? [])
     .map((r) => r.listing)
@@ -37,6 +43,7 @@ export default async function SavedPage() {
         recurring_weekly: l.recurring_weekly,
         is_community: l.is_community,
         times_unknown: l.times_unknown,
+        postponed_note: l.postponed_note,
         photoUrl: photos[0]?.url ?? null,
       };
     });
@@ -51,6 +58,15 @@ export default async function SavedPage() {
           ? `${cards.length} saved`
           : "Sales you save show up here for easy planning."}
       </p>
+
+      {cards.length >= 2 ? (
+        <div className="mt-4">
+          <RouteButton stops={stops} />
+          <p className="mt-1.5 text-xs text-muted">
+            Opens Google Maps with every saved sale as a stop.
+          </p>
+        </div>
+      ) : null}
 
       {cards.length === 0 ? (
         <div className="mt-8 rounded-card border border-dashed border-line bg-surface/60 p-12 text-center">

@@ -106,6 +106,17 @@ export function FilterBar() {
     <div className="space-y-3">
       {/* When chips */}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button
+          onClick={() => setParam("category", category === "FREE_STUFF" ? null : "FREE_STUFF")}
+          className={cn(
+            "shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition",
+            category === "FREE_STUFF"
+              ? "border-live bg-live text-live-ink"
+              : "border-live/50 bg-surface text-live hover:bg-live/10"
+          )}
+        >
+          Free stuff
+        </button>
         {WHEN_OPTIONS.map((opt) => {
           const active = when === opt.value;
           return (

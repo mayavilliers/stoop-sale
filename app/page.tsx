@@ -3,11 +3,12 @@ import { Suspense } from "react";
 import { Tag } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { parseBrowseParams, timeWindow } from "@/lib/browse-filters";
-import { haversineMiles } from "@/lib/geo";
+import { haversineMiles, coarsen } from "@/lib/geo";
 import { getDisplayState } from "@/lib/listing-status";
 import { SaleCard, type BrowseCardData } from "@/components/listings/sale-card";
 import { FilterBar } from "@/components/browse/filter-bar";
 import { ViewToggle } from "@/components/browse/view-toggle";
+import { AlertSignup } from "@/components/browse/alert-signup";
 
 export const metadata = { title: "StoopSale — sales near you" };
 
@@ -23,7 +24,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   let query = supabase
     .from("sale_listings")
     .select(
-      "id,title,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,neighborhood,city,latitude,longitude,categories,created_at,sale_photos(url,sort_order)"
+      "id,title,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,hide_address_until_start,postponed_note,neighborhood,city,latitude,longitude,categories,created_at,sale_photos(url,sort_order)"
     )
     .eq("status", "ACTIVE")
     .eq("is_hidden", false)
@@ -66,9 +67,10 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
 
   let cards: BrowseCardData[] = (data ?? []).map((l) => {
     const photos = (l.sale_photos ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
-    const distanceMiles = here
-      ? haversineMiles(here, { lat: l.latitude, lng: l.longitude })
-      : null;
+    const hidden =
+      l.hide_address_until_start && new Date(l.starts_at).getTime() > Date.now();
+    const coords = hidden ? coarsen(l.latitude, l.longitude) : { lat: l.latitude, lng: l.longitude };
+    const distanceMiles = here ? haversineMiles(here, coords) : null;
     return {
       id: l.id,
       title: l.title,
@@ -82,6 +84,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       recurring_weekly: l.recurring_weekly,
       is_community: l.is_community,
       times_unknown: l.times_unknown,
+      postponed_note: l.postponed_note,
       photoUrl: photos[0]?.url ?? null,
       distanceMiles,
     };
@@ -135,7 +138,12 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
           Something went wrong loading sales. Please refresh.
         </p>
       ) : cards.length === 0 ? (
-        <EmptyState />
+        <EmptyState
+          lat={p.lat}
+          lng={p.lng}
+          radius={p.radiusMiles ?? 2}
+          label={(await searchParams).loc as string | undefined}
+        />
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {cards.map((listing) => (
@@ -152,16 +160,33 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   );
 }
 
-function EmptyState() {
+function EmptyState({
+  lat,
+  lng,
+  radius,
+  label,
+}: {
+  lat: number | null;
+  lng: number | null;
+  radius: number;
+  label?: string;
+}) {
   return (
-    <div className="mt-8 rounded-card border border-dashed border-line bg-surface/60 p-12 text-center">
+    <div className="mt-8 rounded-card border border-dashed border-line bg-surface/60 p-8 text-center sm:p-12">
       <span className="mx-auto grid h-12 w-12 -rotate-6 place-items-center rounded-xl bg-kraft/30 text-kraft">
         <Tag className="h-6 w-6" aria-hidden />
       </span>
       <h2 className="mt-4 font-display text-xl font-bold">No sales match right now</h2>
       <p className="mx-auto mt-1 max-w-sm text-[15px] text-muted">
-        Try widening the time window or clearing a filter. New sales get posted all the time.
+        Try widening the time window or clearing a filter — or let us watch for you.
       </p>
+      {lat != null && lng != null ? (
+        <AlertSignup lat={lat} lng={lng} radius={radius} label={label ?? null} />
+      ) : (
+        <p className="mx-auto mt-4 max-w-sm text-sm text-muted">
+          Tip: set a location above and we can email you when a sale pops up nearby.
+        </p>
+      )}
       <Link
         href="/create"
         className="mx-auto mt-5 inline-flex h-11 items-center gap-1.5 rounded-full bg-sticker px-5 text-[15px] font-semibold text-sticker-ink shadow-card"

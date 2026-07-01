@@ -85,6 +85,7 @@ export default async function EditListingPage({
             earlyBirdsOk: listing.early_birds_ok,
             sessions: fallbackRows,
             recurringWeekly: listing.recurring_weekly,
+            hideAddressUntilStart: listing.hide_address_until_start,
             photos: (listing.sale_photos ?? [])
               .slice()
               .sort((a, b) => a.sort_order - b.sort_order)

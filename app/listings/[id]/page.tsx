@@ -16,12 +16,22 @@ import { directionsToCoords } from "@/lib/geo";
 import { SaveButton } from "@/components/listings/save-button";
 import { ReportButton } from "@/components/listings/report-button";
 import { MiniMap } from "@/components/map/mini-map";
+import { ShareButton } from "@/components/share-button";
+import { AddToCalendar } from "@/components/add-to-calendar";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from("sale_listings").select("title").eq("id", id).single();
-  return { title: data?.title ? `${data.title} — StoopSale` : "Sale — StoopSale" };
+  const { data } = await supabase
+    .from("sale_listings")
+    .select("title, neighborhood, city")
+    .eq("id", id)
+    .single();
+  const title = data?.title ? `${data.title} — StoopSale` : "Sale — StoopSale";
+  const description = data
+    ? `A sale ${data.neighborhood ? `in ${data.neighborhood}` : "near you"} — dates, photos, and directions on StoopSale.`
+    : "Find garage, stoop, and yard sales near you.";
+  return { title, description, openGraph: { title, description } };
 }
 
 export default async function SaleDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,6 +66,8 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
     .slice()
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   const state = getDisplayState(listing, sessions);
+  const hideAddress =
+    listing.hide_address_until_start && state === "upcoming";
   const photos = (listing.sale_photos ?? [])
     .slice()
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -165,6 +177,12 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
         </p>
       </div>
 
+      {listing.postponed_note ? (
+        <div className="mt-4 rounded-card border border-terra/30 bg-terra/5 px-4 py-3 text-[15px] font-medium text-terra">
+          ⛈️ Postponed — {listing.postponed_note}
+        </div>
+      ) : null}
+
       {state === "ended" ? (
         <div className="mt-4 rounded-card border border-line bg-paper px-4 py-3 text-sm text-muted">
           This sale has ended. It&apos;s kept here for reference but won&apos;t show up in browse.
@@ -173,16 +191,27 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
 
       {/* Actions */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <a
-          href={directionsToCoords(listing.latitude, listing.longitude)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-sticker px-5 text-[15px] font-semibold text-sticker-ink shadow-card transition hover:brightness-95"
-        >
-          <Navigation className="h-4 w-4" aria-hidden />
-          Directions
-        </a>
+        {!hideAddress ? (
+          <a
+            href={directionsToCoords(listing.latitude, listing.longitude)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-sticker px-5 text-[15px] font-semibold text-sticker-ink shadow-card transition hover:brightness-95"
+          >
+            <Navigation className="h-4 w-4" aria-hidden />
+            Directions
+          </a>
+        ) : null}
         <SaveButton listingId={listing.id} initialSaved={initialSaved} isLoggedIn={!!user} />
+        <ShareButton title={listing.title} text="Check out this sale on StoopSale" path={`/listings/${listing.id}`} />
+        {state === "upcoming" && !listing.times_unknown ? (
+          <AddToCalendar
+            title={listing.title}
+            startsAt={sessions[0]?.starts_at ?? listing.starts_at}
+            endsAt={sessions[0]?.ends_at ?? listing.ends_at}
+            address={hideAddress ? (place ?? "") : listing.address}
+          />
+        ) : null}
         <span className="ml-auto">
           <ReportButton listingId={listing.id} />
         </span>
@@ -237,9 +266,18 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
       {/* Map preview */}
       <section className="mt-6">
         <h2 className="font-display text-lg font-bold">Where</h2>
-        <div className="mt-2">
-          <MiniMap lat={listing.latitude} lng={listing.longitude} address={listing.address} />
-        </div>
+        {hideAddress ? (
+          <div className="mt-2 rounded-card border border-line bg-surface p-4">
+            <p className="text-[15px] font-medium text-ink">{place}</p>
+            <p className="mt-1 text-sm text-muted">
+              🔒 The exact address appears here when the sale starts. Save it and check back!
+            </p>
+          </div>
+        ) : (
+          <div className="mt-2">
+            <MiniMap lat={listing.latitude} lng={listing.longitude} address={listing.address} />
+          </div>
+        )}
       </section>
     </div>
   );

@@ -17,6 +17,7 @@ export const listingSchema = z.object({
   venmoAccepted: z.boolean().default(false),
   earlyBirdsOk: z.boolean().default(true),
   recurringWeekly: z.boolean().default(false),
+  hideAddressUntilStart: z.boolean().default(false),
 });
 
 export type ListingValues = z.infer<typeof listingSchema> & { sessions: SessionInput[] };
@@ -65,6 +66,7 @@ export function parseListingForm(formData: FormData): ParseResult {
     venmoAccepted: formData.get("venmoAccepted") === "on",
     earlyBirdsOk: formData.get("earlyBirdsOk") === "on",
     recurringWeekly: formData.get("recurringWeekly") === "on",
+    hideAddressUntilStart: formData.get("hideAddressUntilStart") === "on",
   };
 
   const parsed = listingSchema.safeParse(raw);

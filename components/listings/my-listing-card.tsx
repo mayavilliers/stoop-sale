@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { Pencil, Trash2, Eye, EyeOff } from "lucide-react";
-import { deleteListing, setListingStatus } from "@/app/listings/actions";
+import { Pencil, Trash2, Eye, EyeOff, CloudRain, Printer } from "lucide-react";
+import { deleteListing, setListingStatus, setPostponed } from "@/app/listings/actions";
+import { ShareButton } from "@/components/share-button";
 import { StatusBadge } from "@/components/status-badge";
 import { getDisplayState, formatSaleWindow } from "@/lib/listing-status";
 import { saleTypeLabel } from "@/lib/constants";
@@ -21,6 +22,18 @@ export function MyListingCard({ listing }: { listing: SaleListing }) {
   function onToggle() {
     start(() => setListingStatus(listing.id, isDraft ? "ACTIVE" : "DRAFT"));
   }
+  function onPostpone() {
+    if (listing.postponed_note) {
+      start(() => setPostponed(listing.id, null));
+      return;
+    }
+    const note = prompt(
+      "Add a short note shoppers will see (e.g. \"Rained out — back next Saturday\"):",
+      "Rained out — back next Saturday"
+    );
+    if (note === null) return;
+    start(() => setPostponed(listing.id, note || "Postponed"));
+  }
 
   return (
     <div className="rounded-card border border-line bg-surface p-4 shadow-card">
@@ -31,6 +44,11 @@ export function MyListingCard({ listing }: { listing: SaleListing }) {
             <span className="text-xs font-medium uppercase tracking-wide text-muted">
               {saleTypeLabel(listing.sale_type)}
             </span>
+            {listing.postponed_note ? (
+              <span className="rounded-full bg-terra px-2 py-0.5 text-[11px] font-semibold text-terra-ink">
+                Postponed
+              </span>
+            ) : null}
           </div>
           <h3 className="mt-2 truncate font-display text-lg font-bold">{listing.title}</h3>
           <p className="tabular mt-0.5 text-sm text-muted">
@@ -68,6 +86,30 @@ export function MyListingCard({ listing }: { listing: SaleListing }) {
             </>
           )}
         </button>
+
+        <button
+          onClick={onPostpone}
+          disabled={pending}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 text-sm font-medium text-ink transition hover:bg-paper disabled:opacity-60"
+        >
+          <CloudRain className="h-4 w-4" aria-hidden />
+          {listing.postponed_note ? "Un-postpone" : "Postpone"}
+        </button>
+
+        <Link
+          href={`/listings/${listing.id}/flyer`}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 text-sm font-medium text-ink transition hover:bg-paper"
+        >
+          <Printer className="h-4 w-4" aria-hidden />
+          Flyer
+        </Link>
+
+        <ShareButton
+          title={listing.title}
+          text="Come by my sale!"
+          path={`/listings/${listing.id}`}
+          className="h-9 px-3.5 text-sm"
+        />
 
         <button
           onClick={onDelete}

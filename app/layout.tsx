@@ -21,10 +21,26 @@ const mono = Space_Mono({
   display: "swap",
 });
 
+const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://stoopsale.vercel.app";
+
 export const metadata: Metadata = {
-  title: "StoopSale — find sales on your block",
+  metadataBase: new URL(site),
+  title: {
+    default: "StoopSale — garage, stoop & yard sales near you",
+    template: "%s · StoopSale",
+  },
   description:
-    "Find garage, stoop, and yard sales happening near you. List your own in a minute.",
+    "Find garage sales, stoop sales, yard sales, and free stuff happening near you — open now, on a map. List your own in a minute.",
+  keywords: [
+    "garage sales near me", "stoop sale", "yard sales this weekend",
+    "estate sales", "free stuff", "moving sale",
+  ],
+  openGraph: {
+    siteName: "StoopSale",
+    type: "website",
+    title: "StoopSale — garage, stoop & yard sales near you",
+    description: "Sales near you, on a map. Open now, this weekend, and free stuff.",
+  },
 };
 
 export const viewport: Viewport = {
