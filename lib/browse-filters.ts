@@ -24,6 +24,7 @@ export type BrowseParams = {
   sort: SortKey;
   lat: number | null;
   lng: number | null;
+  radiusMiles: number | null;
   tzOffsetMin: number; // minutes such that localTime = utcTime + offset
 };
 
@@ -39,6 +40,7 @@ export function parseBrowseParams(sp: Record<string, string | string[] | undefin
   const saleType = get("type");
   const lat = Number(get("lat"));
   const lng = Number(get("lng"));
+  const radius = Number(get("radius"));
   const tz = Number(get("tz"));
 
   return {
@@ -48,6 +50,7 @@ export function parseBrowseParams(sp: Record<string, string | string[] | undefin
     sort: isSort(get("sort")) ? (get("sort") as SortKey) : "starting",
     lat: Number.isFinite(lat) ? lat : null,
     lng: Number.isFinite(lng) ? lng : null,
+    radiusMiles: Number.isFinite(radius) && radius > 0 ? radius : null,
     tzOffsetMin: Number.isFinite(tz) ? tz : 0,
   };
 }

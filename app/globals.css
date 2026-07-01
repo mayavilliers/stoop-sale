@@ -10,19 +10,26 @@
    single most important fact.
    ============================================================ */
 :root {
-  --ink: #1a1714;          /* sharpie on cardboard */
-  --paper: #efe6d4;        /* kraft / manila page */
-  --surface: #ffffff;      /* clean white cards = the trustworthy counterweight */
-  --muted: #7a7064;        /* secondary text */
-  --line: #e2d7c2;         /* hairline dividers on paper */
+  /* Palette: orange FC8134 · sky B7D9FC · sage A9BDA8 · terracotta A8594F · green 1C7D38 */
+  --ink: #22271f;          /* near-black with a green cast */
+  --paper: #f6f3ec;        /* clean warm cream */
+  --surface: #ffffff;      /* white cards */
+  --muted: #6e7468;        /* secondary text */
+  --line: #e4e0d4;         /* hairline dividers */
 
-  --sticker: #e8430f;      /* price-sticker red — primary actions */
-  --sticker-ink: #ffffff;
+  --sticker: #fc8134;      /* brand orange — primary actions */
+  --sticker-ink: #2b1503;  /* dark text on orange for contrast */
 
-  --kraft: #c9a86a;        /* masking-tape tan — secondary chips */
+  --kraft: #a9bda8;        /* sage — secondary chips & placeholders */
 
-  --live: #b6e80b;         /* fluorescent poster green — OPEN NOW only */
-  --live-ink: #1a1714;
+  --live: #1c7d38;         /* green — reserved for OPEN NOW */
+  --live-ink: #ffffff;
+
+  --sky: #b7d9fc;          /* light blue — informational (Upcoming) */
+  --sky-ink: #16324c;
+
+  --terra: #a8594f;        /* terracotta — destructive / warnings */
+  --terra-ink: #ffffff;
 }
 
 @layer base {

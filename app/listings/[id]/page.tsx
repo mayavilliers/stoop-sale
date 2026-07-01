@@ -4,7 +4,13 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin, Navigation, Tag, Wallet, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
-import { getDisplayState, formatSaleWindow } from "@/lib/listing-status";
+import {
+  getDisplayState,
+  formatSaleDate,
+  formatSaleTimeRange,
+  effectiveWindow,
+} from "@/lib/listing-status";
+import { Calendar, Repeat } from "lucide-react";
 import { saleTypeLabel, categoryLabel } from "@/lib/constants";
 import { directionsToCoords } from "@/lib/geo";
 import { SaveButton } from "@/components/listings/save-button";
@@ -24,7 +30,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
 
   const { data: listing } = await supabase
     .from("sale_listings")
-    .select("*, sale_photos(url, sort_order)")
+    .select("*, sale_photos(url, sort_order), sale_sessions(starts_at, ends_at)")
     .eq("id", id)
     .single();
 
@@ -46,7 +52,10 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
     initialSaved = !!saved;
   }
 
-  const state = getDisplayState(listing);
+  const sessions = (listing.sale_sessions ?? [])
+    .slice()
+    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+  const state = getDisplayState(listing, sessions);
   const photos = (listing.sale_photos ?? [])
     .slice()
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -111,10 +120,45 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
         <h1 className="mt-1 font-display text-3xl font-extrabold leading-tight tracking-tight">
           {listing.title}
         </h1>
-        <p className="tabular mt-2 flex items-center gap-1.5 text-[15px] text-ink">
-          <Clock className="h-4 w-4 text-muted" aria-hidden />
-          {formatSaleWindow(listing.starts_at, listing.ends_at)}
-        </p>
+        <div className="mt-3 space-y-1">
+          {(sessions.length ? sessions : [{ starts_at: listing.starts_at, ends_at: listing.ends_at }]).map(
+            (sess) => {
+              const w = effectiveWindow({
+                starts_at: sess.starts_at,
+                ends_at: sess.ends_at,
+                recurring_weekly: listing.recurring_weekly,
+              });
+              const ws = new Date(w.starts).toISOString();
+              const we = new Date(w.ends).toISOString();
+              return (
+                <p
+                  key={sess.starts_at}
+                  className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[16px] font-semibold text-ink"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 shrink-0 text-sticker" aria-hidden />
+                    {formatSaleDate(ws, ws)}
+                  </span>
+                  <span className="tabular flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 shrink-0 text-sticker" aria-hidden />
+                    {listing.times_unknown ? "Times unknown" : formatSaleTimeRange(ws, we)}
+                  </span>
+                </p>
+              );
+            }
+          )}
+          {listing.recurring_weekly ? (
+            <p className="flex items-center gap-1.5 text-sm font-medium text-sky-ink">
+              <Repeat className="h-4 w-4" aria-hidden />
+              Repeats every week
+            </p>
+          ) : null}
+          {listing.is_community ? (
+            <p className="text-sm text-muted">
+              Spotted by a neighbor — details may be incomplete.
+            </p>
+          ) : null}
+        </div>
         <p className="mt-1 flex items-center gap-1.5 text-[15px] text-muted">
           <MapPin className="h-4 w-4" aria-hidden />
           {place}

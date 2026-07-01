@@ -63,8 +63,13 @@ Google Maps keys aren't needed until Phase 4; leave them blank for now.
 
 ```bash
 supabase start          # boots Postgres, Auth, Storage locally (Docker)
-supabase db reset       # applies supabase/migrations/0001_init.sql + RLS + storage
+supabase db reset       # applies ALL migrations in supabase/migrations/ (0001 + 0002)
 ```
+
+> **Already running a live project on 0001?** Apply the new migration by pasting
+> `supabase/migrations/0002_sessions_community.sql` into the Supabase SQL editor and
+> running it (or `supabase db push`). It adds multi-day sale sessions, weekly
+> recurrence, and community-spotted listings.
 
 `db reset` runs the migration, which creates all tables, enums, indexes, RLS policies, the profile-on-signup trigger, the `submit_report` RPC, and the public `sale-photos` storage bucket.
 

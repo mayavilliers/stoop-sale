@@ -4,6 +4,7 @@ import { Tag } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { parseBrowseParams, timeWindow } from "@/lib/browse-filters";
 import { haversineMiles } from "@/lib/geo";
+import { getDisplayState } from "@/lib/listing-status";
 import { SaleCard, type BrowseCardData } from "@/components/listings/sale-card";
 import { FilterBar } from "@/components/browse/filter-bar";
 import { ViewToggle } from "@/components/browse/view-toggle";
@@ -22,7 +23,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   let query = supabase
     .from("sale_listings")
     .select(
-      "id,title,sale_type,status,starts_at,ends_at,neighborhood,city,latitude,longitude,categories,created_at,sale_photos(url,sort_order)"
+      "id,title,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,neighborhood,city,latitude,longitude,categories,created_at,sale_photos(url,sort_order)"
     )
     .eq("status", "ACTIVE")
     .eq("is_hidden", false)
@@ -31,9 +32,12 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   const win = timeWindow(p.when, p.tzOffsetMin);
   const nowIso = new Date().toISOString();
   if (win.openNow) {
-    query = query.lte("starts_at", nowIso).gt("ends_at", nowIso);
+    query = query
+      .lte("starts_at", nowIso)
+      .or(`ends_at.gt.${nowIso},recurring_weekly.eq.true`);
   } else {
-    if (win.endsAfter) query = query.gt("ends_at", win.endsAfter);
+    if (win.endsAfter)
+      query = query.or(`ends_at.gt.${win.endsAfter},recurring_weekly.eq.true`);
     if (win.startsBefore) query = query.lt("starts_at", win.startsBefore);
   }
   if (p.category) query = query.overlaps("categories", [p.category]);
@@ -75,10 +79,24 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       neighborhood: l.neighborhood,
       city: l.city,
       categories: l.categories,
+      recurring_weekly: l.recurring_weekly,
+      is_community: l.is_community,
+      times_unknown: l.times_unknown,
       photoUrl: photos[0]?.url ?? null,
       distanceMiles,
     };
   });
+
+  // Distance radius (when a location is set).
+  if (here && p.radiusMiles != null) {
+    cards = cards.filter(
+      (c) => typeof c.distanceMiles === "number" && c.distanceMiles <= p.radiusMiles!
+    );
+  }
+  // Recurring sales pass the DB time filters loosely; refine "open now" here.
+  if (p.when === "open") {
+    cards = cards.filter((c) => getDisplayState(c) === "open");
+  }
 
   if (p.sort === "distance" && here) {
     cards = cards.sort(
@@ -97,6 +115,10 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
             {cards.length > 0
               ? `${cards.length} ${cards.length === 1 ? "sale" : "sales"} matching`
               : "Browse what's on around the neighborhood"}
+            {" · "}
+            <Link href="/spot" className="font-medium text-sticker hover:underline">
+              Spotted a sale?
+            </Link>
           </p>
         </div>
         <Suspense fallback={null}>

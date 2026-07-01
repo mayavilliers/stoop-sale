@@ -4,7 +4,7 @@ import { type DisplayState, DISPLAY_STATE_LABEL } from "@/lib/listing-status";
 const styles: Record<DisplayState, string> = {
   // Open now gets the loudest token in the system — the neon poster green.
   open: "bg-live text-live-ink",
-  upcoming: "bg-ink text-paper",
+  upcoming: "bg-sky text-sky-ink",
   ended: "bg-transparent text-muted border border-line",
   draft: "bg-transparent text-muted border border-dashed border-line",
 };

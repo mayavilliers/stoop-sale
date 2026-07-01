@@ -9,6 +9,7 @@ import { Field, Input } from "@/components/ui/input";
 import { Textarea, Select, Checkbox } from "@/components/ui/textarea";
 import { PhotoUploader } from "@/components/listings/photo-uploader";
 import { AddressAutocomplete } from "@/components/listings/address-autocomplete";
+import { SessionRows, type SessionInitial } from "@/components/listings/session-rows";
 
 export type ListingInitial = {
   title?: string;
@@ -16,25 +17,14 @@ export type ListingInitial = {
   description?: string;
   categories?: Category[];
   address?: string;
-  startsAt?: string;
-  endsAt?: string;
   notes?: string;
   cashOnly?: boolean;
   venmoAccepted?: boolean;
   earlyBirdsOk?: boolean;
-  rainDate?: string | null;
   photos?: string[];
+  sessions?: SessionInitial[];
+  recurringWeekly?: boolean;
 };
-
-function toLocalInput(iso?: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
-  )}:${pad(d.getMinutes())}`;
-}
 
 function Buttons({ mode }: { mode: "create" | "edit" }) {
   const { pending } = useFormStatus();
@@ -155,14 +145,11 @@ export function ListingForm({
         </p>
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Starts" htmlFor="startsAt" error={err.startsAt}>
-          <Input id="startsAt" name="startsAt" type="datetime-local" defaultValue={toLocalInput(initial.startsAt)} required />
-        </Field>
-        <Field label="Ends" htmlFor="endsAt" error={err.endsAt}>
-          <Input id="endsAt" name="endsAt" type="datetime-local" defaultValue={toLocalInput(initial.endsAt)} required />
-        </Field>
-      </div>
+      <SessionRows
+        initial={initial.sessions}
+        initialRecurring={initial.recurringWeekly}
+        error={err.sessions}
+      />
 
       <Field label="Seller notes (optional)" htmlFor="notes" error={err.notes}>
         <Input id="notes" name="notes" defaultValue={initial.notes} placeholder="e.g. Cash or Venmo, early birds welcome, rain date Sunday" />

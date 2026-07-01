@@ -14,12 +14,17 @@ export function FilterBar() {
   const [pending, startTransition] = useTransition();
   const [locating, setLocating] = useState(false);
   const [denied, setDenied] = useState(false);
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [placeError, setPlaceError] = useState<string | null>(null);
+  const [placeLoading, setPlaceLoading] = useState(false);
 
   const when = params.get("when") ?? "all";
   const category = params.get("category") ?? "";
   const type = params.get("type") ?? "";
   const sort = params.get("sort") ?? "starting";
   const hasLocation = params.has("lat") && params.has("lng");
+  const locationLabel = params.get("loc");
+  const radius = params.get("radius") ?? "";
 
   function commit(next: URLSearchParams) {
     // Always carry the viewer's tz offset so day filters use local days.
@@ -32,6 +37,33 @@ export function FilterBar() {
     if (value) next.set(key, value);
     else next.delete(key);
     commit(next);
+  }
+
+  async function searchPlace() {
+    const q = placeQuery.trim();
+    if (q.length < 2) return;
+    setPlaceLoading(true);
+    setPlaceError(null);
+    try {
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setPlaceError(data.error ?? "We couldn't find that place.");
+        return;
+      }
+      const next = new URLSearchParams(params.toString());
+      next.set("lat", Number(data.lat).toFixed(5));
+      next.set("lng", Number(data.lng).toFixed(5));
+      next.set("loc", String(data.label));
+      next.set("sort", "distance");
+      if (!next.get("radius")) next.set("radius", "2");
+      setPlaceQuery("");
+      commit(next);
+    } catch {
+      setPlaceError("We couldn't find that place.");
+    } finally {
+      setPlaceLoading(false);
+    }
   }
 
   function useMyLocation() {
@@ -47,7 +79,9 @@ export function FilterBar() {
         const next = new URLSearchParams(params.toString());
         next.set("lat", pos.coords.latitude.toFixed(5));
         next.set("lng", pos.coords.longitude.toFixed(5));
+        next.delete("loc");
         next.set("sort", "distance");
+        if (!next.get("radius")) next.set("radius", "2");
         commit(next);
       },
       () => {
@@ -62,6 +96,8 @@ export function FilterBar() {
     const next = new URLSearchParams(params.toString());
     next.delete("lat");
     next.delete("lng");
+    next.delete("loc");
+    next.delete("radius");
     if (next.get("sort") === "distance") next.set("sort", "starting");
     commit(next);
   }
@@ -120,14 +156,33 @@ export function FilterBar() {
         />
 
         {hasLocation ? (
-          <button
-            onClick={clearLocation}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-ink bg-ink px-3 text-sm font-medium text-paper"
-          >
-            <Navigation className="h-3.5 w-3.5" aria-hidden />
-            Near you
-            <X className="h-3.5 w-3.5 opacity-80" aria-hidden />
-          </button>
+          <>
+            <button
+              onClick={clearLocation}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-ink bg-ink px-3 text-sm font-medium text-paper"
+            >
+              <Navigation className="h-3.5 w-3.5" aria-hidden />
+              {locationLabel ? `Near ${locationLabel}` : "Near you"}
+              <X className="h-3.5 w-3.5 opacity-80" aria-hidden />
+            </button>
+            <label className="relative inline-flex">
+              <span className="sr-only">Radius</span>
+              <select
+                value={radius || "2"}
+                onChange={(e) => setParam("radius", e.target.value)}
+                className="h-9 appearance-none rounded-full border border-line bg-surface pl-3.5 pr-8 text-sm font-medium text-ink focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/10"
+              >
+                {["0.5", "1", "2", "5", "10", "25"].map((r) => (
+                  <option key={r} value={r}>
+                    Within {r} mi
+                  </option>
+                ))}
+              </select>
+              <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </label>
+          </>
         ) : (
           <button
             onClick={useMyLocation}
@@ -143,6 +198,32 @@ export function FilterBar() {
           </button>
         )}
       </div>
+
+      {!hasLocation ? (
+        <div className="flex max-w-md items-center gap-2">
+          <input
+            value={placeQuery}
+            onChange={(e) => setPlaceQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                searchPlace();
+              }
+            }}
+            placeholder="Or type a zip, city, or neighborhood…"
+            className="h-9 flex-1 rounded-full border border-line bg-surface px-3.5 text-sm text-ink placeholder:text-muted/70 focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/10"
+            aria-label="Search near a place"
+          />
+          <button
+            onClick={searchPlace}
+            disabled={placeLoading || placeQuery.trim().length < 2}
+            className="h-9 shrink-0 rounded-full bg-ink px-3.5 text-sm font-medium text-paper disabled:opacity-50"
+          >
+            {placeLoading ? "…" : "Go"}
+          </button>
+        </div>
+      ) : null}
+      {placeError ? <p className="text-xs text-terra">{placeError}</p> : null}
 
       {denied ? (
         <p className="text-xs text-muted">

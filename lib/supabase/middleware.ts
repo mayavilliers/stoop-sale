@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/types/database.types";
 
 // Routes that require a logged-in user.
-const PROTECTED = ["/create", "/my-listings", "/saved", "/admin"];
+const PROTECTED = ["/create", "/spot", "/my-listings", "/saved", "/admin"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

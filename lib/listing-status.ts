@@ -2,20 +2,58 @@ import { format, isSameDay } from "date-fns";
 
 export type DisplayState = "draft" | "upcoming" | "open" | "ended";
 
-/**
- * The single source of truth for whether a sale is live. Derived from time so a
- * missed "expire" cron can never leave an ended sale showing as open.
- */
-export function getDisplayState(listing: {
+type Windowish = {
   status: string;
   starts_at: string;
   ends_at: string;
-}): DisplayState {
+  recurring_weekly?: boolean;
+};
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * For weekly-recurring sales, roll the window forward to its next occurrence.
+ * Non-recurring sales return their stored window unchanged.
+ */
+export function effectiveWindow(
+  l: Pick<Windowish, "starts_at" | "ends_at" | "recurring_weekly">,
+  now = Date.now()
+): { starts: number; ends: number } {
+  let starts = new Date(l.starts_at).getTime();
+  let ends = new Date(l.ends_at).getTime();
+  if (l.recurring_weekly) {
+    while (ends <= now) {
+      starts += WEEK_MS;
+      ends += WEEK_MS;
+    }
+  }
+  return { starts, ends };
+}
+
+/**
+ * The single source of truth for whether a sale is live. Derived from time so a
+ * missed "expire" cron can never leave an ended sale showing as open. If the
+ * sale has multiple sessions, it's open when ANY session is open (recurring
+ * sessions are projected to their next weekly occurrence).
+ */
+export function getDisplayState(
+  listing: Windowish,
+  sessions?: { starts_at: string; ends_at: string }[]
+): DisplayState {
   if (listing.status === "DRAFT") return "draft";
   const now = Date.now();
-  if (new Date(listing.ends_at).getTime() <= now) return "ended";
-  if (new Date(listing.starts_at).getTime() > now) return "upcoming";
-  return "open";
+  const recurring = !!listing.recurring_weekly;
+
+  const windows =
+    sessions && sessions.length
+      ? sessions.map((s) =>
+          effectiveWindow({ ...s, recurring_weekly: recurring }, now)
+        )
+      : [effectiveWindow(listing, now)];
+
+  if (windows.some((w) => w.starts <= now && now < w.ends)) return "open";
+  if (windows.some((w) => w.starts > now)) return "upcoming";
+  return "ended";
 }
 
 export const DISPLAY_STATE_LABEL: Record<DisplayState, string> = {

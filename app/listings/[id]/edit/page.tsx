@@ -21,7 +21,7 @@ export default async function EditListingPage({
 
   const { data: listing } = await supabase
     .from("sale_listings")
-    .select("*, sale_photos(url, sort_order)")
+    .select("*, sale_photos(url, sort_order), sale_sessions(starts_at, ends_at)")
     .eq("id", id)
     .single();
 
@@ -30,6 +30,34 @@ export default async function EditListingPage({
   if (listing.owner_id !== user.id) redirect("/my-listings");
 
   const action = updateListing.bind(null, id);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const toRow = (iso: string) => {
+    const d = new Date(iso);
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    };
+  };
+  const sessionRows = (listing.sale_sessions ?? [])
+    .slice()
+    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+    .map((sess) => ({
+      date: toRow(sess.starts_at).date,
+      start: toRow(sess.starts_at).time,
+      end: toRow(sess.ends_at).time,
+    }));
+  // Older listings created before multi-day support have no session rows.
+  const fallbackRows =
+    sessionRows.length > 0
+      ? sessionRows
+      : [
+          {
+            date: toRow(listing.starts_at).date,
+            start: toRow(listing.starts_at).time,
+            end: toRow(listing.ends_at).time,
+          },
+        ];
 
   return (
     <div className="mx-auto w-full max-w-xl px-4 py-10">
@@ -51,13 +79,12 @@ export default async function EditListingPage({
             description: listing.description,
             categories: listing.categories,
             address: listing.address,
-            startsAt: listing.starts_at,
-            endsAt: listing.ends_at,
             notes: listing.notes ?? "",
             cashOnly: listing.cash_only,
             venmoAccepted: listing.venmo_accepted,
             earlyBirdsOk: listing.early_birds_ok,
-            rainDate: listing.rain_date,
+            sessions: fallbackRows,
+            recurringWeekly: listing.recurring_weekly,
             photos: (listing.sale_photos ?? [])
               .slice()
               .sort((a, b) => a.sort_order - b.sort_order)

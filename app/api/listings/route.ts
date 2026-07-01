@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("sale_listings")
     .select(
-      "id,title,latitude,longitude,sale_type,status,starts_at,ends_at,neighborhood,categories,sale_photos(url,sort_order)"
+      "id,title,latitude,longitude,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,neighborhood,categories,sale_photos(url,sort_order)"
     )
     .eq("status", "ACTIVE")
     .eq("is_hidden", false)
@@ -40,9 +40,12 @@ export async function GET(request: Request) {
   const win = timeWindow(when, tz);
   const nowIso = new Date().toISOString();
   if (win.openNow) {
-    query = query.lte("starts_at", nowIso).gt("ends_at", nowIso);
+    query = query
+      .lte("starts_at", nowIso)
+      .or(`ends_at.gt.${nowIso},recurring_weekly.eq.true`);
   } else {
-    if (win.endsAfter) query = query.gt("ends_at", win.endsAfter);
+    if (win.endsAfter)
+      query = query.or(`ends_at.gt.${win.endsAfter},recurring_weekly.eq.true`);
     if (win.startsBefore) query = query.lt("starts_at", win.startsBefore);
   }
   if (category) query = query.overlaps("categories", [category]);
@@ -78,6 +81,9 @@ export async function GET(request: Request) {
       ends_at: l.ends_at,
       neighborhood: l.neighborhood,
       categories: l.categories,
+      recurring_weekly: l.recurring_weekly,
+      is_community: l.is_community,
+      times_unknown: l.times_unknown,
       photoUrl: photos[0]?.url ?? null,
     };
   });

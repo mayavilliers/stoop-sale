@@ -59,6 +59,9 @@ export interface Database {
           status: ListingStatus;
           reported_count: number;
           is_hidden: boolean;
+          recurring_weekly: boolean;
+          is_community: boolean;
+          times_unknown: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -87,6 +90,9 @@ export interface Database {
           // moderation fields — set by admins / seed, not by the create form
           reported_count?: number;
           is_hidden?: boolean;
+          recurring_weekly?: boolean;
+          is_community?: boolean;
+          times_unknown?: boolean;
         };
         Update: Partial<Database["public"]["Tables"]["sale_listings"]["Insert"]>;
         Relationships: [
@@ -121,6 +127,31 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "sale_photos_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "sale_listings";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      sale_sessions: {
+        Row: {
+          id: string;
+          listing_id: string;
+          starts_at: string;
+          ends_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          listing_id: string;
+          starts_at: string;
+          ends_at: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["sale_sessions"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "sale_sessions_listing_id_fkey";
             columns: ["listing_id"];
             isOneToOne: false;
             referencedRelation: "sale_listings";
@@ -214,5 +245,6 @@ export interface Database {
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type SaleListing = Database["public"]["Tables"]["sale_listings"]["Row"];
 export type SalePhoto = Database["public"]["Tables"]["sale_photos"]["Row"];
+export type SaleSession = Database["public"]["Tables"]["sale_sessions"]["Row"];
 export type SavedSale = Database["public"]["Tables"]["saved_sales"]["Row"];
 export type Report = Database["public"]["Tables"]["reports"]["Row"];

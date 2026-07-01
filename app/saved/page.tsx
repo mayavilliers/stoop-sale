@@ -14,7 +14,7 @@ export default async function SavedPage() {
   const { data: rows } = await supabase
     .from("saved_sales")
     .select(
-      "created_at, listing:sale_listings(id,title,sale_type,status,starts_at,ends_at,neighborhood,city,categories,sale_photos(url,sort_order))"
+      "created_at, listing:sale_listings(id,title,sale_type,status,starts_at,ends_at,recurring_weekly,is_community,times_unknown,neighborhood,city,categories,sale_photos(url,sort_order))"
     )
     .eq("user_id", user!.id)
     .order("created_at", { ascending: false });
@@ -34,6 +34,9 @@ export default async function SavedPage() {
         neighborhood: l.neighborhood,
         city: l.city,
         categories: l.categories,
+        recurring_weekly: l.recurring_weekly,
+        is_community: l.is_community,
+        times_unknown: l.times_unknown,
         photoUrl: photos[0]?.url ?? null,
       };
     });

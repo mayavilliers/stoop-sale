@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Tag, MapPin, Clock, Calendar } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
-import { getDisplayState, formatSaleDate, formatSaleTimeRange } from "@/lib/listing-status";
+import { getDisplayState, formatSaleDate, formatSaleTimeRange, effectiveWindow } from "@/lib/listing-status";
 import { saleTypeLabel, categoryLabel } from "@/lib/constants";
 import { formatMiles } from "@/lib/geo";
 import { SaveHeart } from "@/components/listings/save-heart";
@@ -18,6 +18,9 @@ export type BrowseCardData = {
   neighborhood: string | null;
   city: string | null;
   categories: Category[];
+  recurring_weekly?: boolean;
+  is_community?: boolean;
+  times_unknown?: boolean;
   photoUrl: string | null;
   distanceMiles?: number | null;
 };
@@ -33,6 +36,9 @@ export function SaleCard({
 }) {
   const state = getDisplayState(listing);
   const place = listing.neighborhood ?? listing.city ?? "Brooklyn";
+  const win = effectiveWindow(listing);
+  const winStart = new Date(win.starts).toISOString();
+  const winEnd = new Date(win.ends).toISOString();
 
   return (
     <div className="relative">
@@ -55,11 +61,18 @@ export function SaleCard({
           <div className="mt-2 space-y-0.5">
             <p className="flex items-center gap-1.5 text-[15px] font-bold leading-snug text-ink">
               <Calendar className="h-4 w-4 shrink-0 text-sticker" aria-hidden />
-              {formatSaleDate(listing.starts_at, listing.ends_at)}
+              {formatSaleDate(winStart, winEnd)}
+              {listing.recurring_weekly ? (
+                <span className="rounded-full bg-sky px-2 py-0.5 text-[11px] font-semibold text-sky-ink">
+                  Weekly
+                </span>
+              ) : null}
             </p>
             <p className="tabular flex items-center gap-1.5 text-[15px] font-bold leading-snug text-ink">
               <Clock className="h-4 w-4 shrink-0 text-sticker" aria-hidden />
-              {formatSaleTimeRange(listing.starts_at, listing.ends_at)}
+              {listing.times_unknown
+                ? "Times unknown"
+                : formatSaleTimeRange(winStart, winEnd)}
             </p>
           </div>
 
@@ -70,6 +83,7 @@ export function SaleCard({
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">
+              {listing.is_community ? "Spotted · " : ""}
               {saleTypeLabel(listing.sale_type)} · {place}
             </span>
           </p>

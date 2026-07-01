@@ -72,7 +72,7 @@ export function MyListingCard({ listing }: { listing: SaleListing }) {
         <button
           onClick={onDelete}
           disabled={pending}
-          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-sticker transition hover:bg-sticker/5 disabled:opacity-60"
+          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-terra transition hover:bg-terra/10 disabled:opacity-60"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
           Delete

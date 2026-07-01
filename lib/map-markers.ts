@@ -11,6 +11,9 @@ export type MapMarker = {
   ends_at: string;
   neighborhood: string | null;
   categories: Category[];
+  recurring_weekly: boolean;
+  is_community: boolean;
+  times_unknown: boolean;
   photoUrl: string | null;
 };
 

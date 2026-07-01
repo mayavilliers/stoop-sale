@@ -22,6 +22,8 @@ const config: Config = {
         },
         // kraft / masking-tape tan — secondary chips
         kraft: "var(--kraft)",
+        sky: { DEFAULT: "var(--sky)", ink: "var(--sky-ink)" },
+        terra: { DEFAULT: "var(--terra)", ink: "var(--terra-ink)" },
         // fluorescent poster green — reserved for "Open now" only
         live: {
           DEFAULT: "var(--live)",
