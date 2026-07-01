@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SaleCard, type BrowseCardData } from "@/components/listings/sale-card";
-import { RemoveSavedButton } from "@/components/listings/remove-saved-button";
 
 export const metadata = { title: "Saved sales — StoopSale" };
 
@@ -69,10 +68,7 @@ export default async function SavedPage() {
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {cards.map((listing) => (
-            <div key={listing.id} className="relative">
-              <RemoveSavedButton listingId={listing.id} />
-              <SaleCard listing={listing} />
-            </div>
+            <SaleCard key={listing.id} listing={listing} initialSaved isLoggedIn />
           ))}
         </div>
       )}

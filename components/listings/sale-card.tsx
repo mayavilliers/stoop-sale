@@ -1,10 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Tag, MapPin, Clock } from "lucide-react";
+import { Tag, MapPin, Clock, Calendar } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
-import { getDisplayState, formatSaleWindow } from "@/lib/listing-status";
+import { getDisplayState, formatSaleDate, formatSaleTimeRange } from "@/lib/listing-status";
 import { saleTypeLabel, categoryLabel } from "@/lib/constants";
 import { formatMiles } from "@/lib/geo";
+import { SaveHeart } from "@/components/listings/save-heart";
 import type { Category, SaleType } from "@/lib/types/database.types";
 
 export type BrowseCardData = {
@@ -21,77 +22,102 @@ export type BrowseCardData = {
   distanceMiles?: number | null;
 };
 
-export function SaleCard({ listing }: { listing: BrowseCardData }) {
+export function SaleCard({
+  listing,
+  initialSaved = false,
+  isLoggedIn = false,
+}: {
+  listing: BrowseCardData;
+  initialSaved?: boolean;
+  isLoggedIn?: boolean;
+}) {
   const state = getDisplayState(listing);
   const place = listing.neighborhood ?? listing.city ?? "Brooklyn";
 
   return (
-    <Link
-      href={`/listings/${listing.id}`}
-      className="group flex gap-3 rounded-card border border-line bg-surface p-3 shadow-card transition hover:shadow-pop focus-visible:shadow-pop"
-    >
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-2">
-          <StatusBadge state={state} />
-          {typeof listing.distanceMiles === "number" ? (
-            <span className="tabular text-xs font-semibold text-muted">
-              {formatMiles(listing.distanceMiles)}
-            </span>
-          ) : null}
-        </div>
-
-        {/* Date & time — the most prominent line on the card. */}
-        <p className="tabular mt-2 flex items-start gap-1.5 text-[15px] font-semibold leading-snug text-ink">
-          <Clock className="mt-0.5 h-4 w-4 shrink-0 text-sticker" aria-hidden />
-          {formatSaleWindow(listing.starts_at, listing.ends_at)}
-        </p>
-
-        <h3 className="mt-1.5 line-clamp-2 font-display text-base font-bold leading-snug">
-          {listing.title}
-        </h3>
-
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="truncate">
-            {saleTypeLabel(listing.sale_type)} · {place}
-          </span>
-        </p>
-
-        {listing.categories.length ? (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {listing.categories.slice(0, 3).map((c) => (
-              <span
-                key={c}
-                className="rounded-full bg-paper px-2 py-0.5 text-xs font-medium text-ink/80"
-              >
-                {categoryLabel(c)}
-              </span>
-            ))}
-            {listing.categories.length > 3 ? (
-              <span className="px-1 py-0.5 text-xs text-muted">
-                +{listing.categories.length - 3}
+    <div className="relative">
+      <Link
+        href={`/listings/${listing.id}`}
+        className="group flex gap-3 rounded-card border border-line bg-surface p-3 shadow-card transition hover:shadow-pop focus-visible:shadow-pop"
+      >
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Top row: status + distance (heart is overlaid top-right) */}
+          <div className="flex items-center gap-2 pr-10">
+            <StatusBadge state={state} />
+            {typeof listing.distanceMiles === "number" ? (
+              <span className="tabular text-xs font-semibold text-muted">
+                {formatMiles(listing.distanceMiles)}
               </span>
             ) : null}
           </div>
-        ) : null}
-      </div>
 
-      {/* Secondary thumbnail — small, and unobtrusive when there's no photo. */}
-      <div className="relative h-24 w-24 shrink-0 self-center overflow-hidden rounded-xl bg-paper sm:h-28 sm:w-28">
-        {listing.photoUrl ? (
-          <Image
-            src={listing.photoUrl}
-            alt=""
-            fill
-            sizes="112px"
-            className="object-cover transition duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-kraft/70">
-            <Tag className="h-7 w-7 -rotate-6" aria-hidden />
+          {/* Date + time as two clean rows */}
+          <div className="mt-2 space-y-0.5">
+            <p className="flex items-center gap-1.5 text-[15px] font-bold leading-snug text-ink">
+              <Calendar className="h-4 w-4 shrink-0 text-sticker" aria-hidden />
+              {formatSaleDate(listing.starts_at, listing.ends_at)}
+            </p>
+            <p className="tabular flex items-center gap-1.5 text-[15px] font-bold leading-snug text-ink">
+              <Clock className="h-4 w-4 shrink-0 text-sticker" aria-hidden />
+              {formatSaleTimeRange(listing.starts_at, listing.ends_at)}
+            </p>
           </div>
-        )}
-      </div>
-    </Link>
+
+          <h3 className="mt-1.5 line-clamp-2 font-display text-base font-bold leading-snug">
+            {listing.title}
+          </h3>
+
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">
+              {saleTypeLabel(listing.sale_type)} · {place}
+            </span>
+          </p>
+
+          {listing.categories.length ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {listing.categories.slice(0, 3).map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full bg-paper px-2 py-0.5 text-xs font-medium text-ink/80"
+                >
+                  {categoryLabel(c)}
+                </span>
+              ))}
+              {listing.categories.length > 3 ? (
+                <span className="px-1 py-0.5 text-xs text-muted">
+                  +{listing.categories.length - 3}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Secondary thumbnail — small, unobtrusive when there's no photo. */}
+        <div className="relative h-24 w-24 shrink-0 self-center overflow-hidden rounded-xl bg-paper sm:h-28 sm:w-28">
+          {listing.photoUrl ? (
+            <Image
+              src={listing.photoUrl}
+              alt=""
+              fill
+              sizes="112px"
+              className="object-cover transition duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-kraft/70">
+              <Tag className="h-7 w-7 -rotate-6" aria-hidden />
+            </div>
+          )}
+        </div>
+      </Link>
+
+      {/* Save heart — sibling of the link so it never opens the card. */}
+      <SaveHeart
+        listingId={listing.id}
+        initialSaved={initialSaved}
+        isLoggedIn={isLoggedIn}
+        className="absolute right-2.5 top-2.5 z-10"
+      />
+    </div>
   );
 }

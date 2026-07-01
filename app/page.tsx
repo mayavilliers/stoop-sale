@@ -45,6 +45,19 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
 
   const { data, error } = await query;
 
+  // Which of these has the current user saved? (drives the heart state)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let savedIds = new Set<string>();
+  if (user) {
+    const { data: saves } = await supabase
+      .from("saved_sales")
+      .select("listing_id")
+      .eq("user_id", user.id);
+    savedIds = new Set((saves ?? []).map((s) => s.listing_id));
+  }
+
   const here = p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null;
 
   let cards: BrowseCardData[] = (data ?? []).map((l) => {
@@ -104,7 +117,12 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {cards.map((listing) => (
-            <SaleCard key={listing.id} listing={listing} />
+            <SaleCard
+              key={listing.id}
+              listing={listing}
+              initialSaved={savedIds.has(listing.id)}
+              isLoggedIn={!!user}
+            />
           ))}
         </div>
       )}
